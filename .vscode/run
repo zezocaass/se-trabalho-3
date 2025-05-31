@@ -1,0 +1,13 @@
+
+#!/bin/bash
+
+./bin/arduino-cli compile --fqbn arduino:avr:uno code --libraries ./libs/ --build-path ./build --clean
+
+echo "Starting simulation..."
+
+sleep 1
+
+xdotool key ctrl+shift+p
+xdotool type "Wokwi: Start Simulation"
+xdotool key Return
+
