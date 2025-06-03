@@ -7,7 +7,7 @@ from machine import Pin
 ssid = 'zezocas'
 password = '123456789'
 
-led = Pin(2, Pin.OUT)  # LED onboard do ESP32 (pino 2)
+led = Pin(22, Pin.OUT)  # LED onboard do ESP32 (pino 2) ou "22" para o led externo
 led.off()  # Começa desligado
 
 # --- Conectar ao Wi-Fi ---
@@ -240,3 +240,4 @@ while True:
     response = 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n' + gerar_html(led.value())
     conn.send(response)
     conn.close()
+
