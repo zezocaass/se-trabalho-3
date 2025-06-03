@@ -4,10 +4,11 @@ import time
 from machine import Pin
 
 # --- Configuração Wi-Fi ---
-ssid = 'NOME_DA_TUA_REDE'
-password = 'SENHA_DA_TUA_REDE'
+ssid = 'zezocas'
+password = '123456789'
 
 led = Pin(2, Pin.OUT)  # LED onboard do ESP32 (pino 2)
+led.off()  # Começa desligado
 
 # --- Conectar ao Wi-Fi ---
 station = network.WLAN(network.STA_IF)
@@ -19,99 +20,101 @@ while not station.isconnected():
 
 print('Conectado ao Wi-Fi. IP:', station.ifconfig()[0])
 
-# --- HTML com CSS ---
-html = """<!DOCTYPE html>
+# --- Função para gerar HTML dinâmico ---
+def gerar_html(estado_led):
+    estado_texto = "Ligado" if estado_led else "Desligado"
+    return f"""<!DOCTYPE html>
 <html lang="pt">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Trabalho 3 - Controlo do Hardware</title>
   <style>
-    * {
+    * {{
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-    }
+    }}
 
-    html, body {
+    html, body {{
       height: 100%;
-    }
+    }}
 
-    body {
+    body {{
       font-family: sans-serif;
       background-color: #f9f9f9;
       display: flex;
       flex-direction: column;
-    }
+    }}
 
-    header {
+    header {{
       background-color: #ffffff;
       padding: 1rem;
       border-bottom: 1px solid #ddd;
-    }
+    }}
 
-    header h1 {
+    header h1 {{
       font-size: 1.2rem;
       font-weight: normal;
       margin-left: 1rem;
-    }
+    }}
 
-    .container {
+    .container {{
       display: flex;
       flex: 1;
-    }
+    }}
 
-    aside {
+    aside {{
       width: 220px;
       background-color: #b5a556;
       padding: 1rem;
       color: black;
-    }
+    }}
 
-    aside h2 {
+    aside h2 {{
       font-weight: bold;
       margin-bottom: 1rem;
-    }
+    }}
 
-    aside p {
+    aside p {{
       margin-bottom: 0.5rem;
-    }
+    }}
 
-    main {
+    main {{
       flex: 1;
-    }
+    }}
 
-    .header-bar {
+    .header-bar {{
       background-color: #666;
       color: white;
       padding: 1rem;
-    }
+    }}
 
-    .header-bar h2 {
+    .header-bar h2 {{
       font-size: 1.8rem;
       font-weight: bold;
-    }
+    }}
 
-    .estado-led {
+    .estado-led {{
       background-color: #e9ecef;
       margin: 2rem;
       padding: 2rem;
       border-radius: 10px;
       text-align: center;
-    }
+    }}
 
-    .estado-led h3 {
+    .estado-led h3 {{
       font-size: 3rem;
       margin-bottom: 1.5rem;
-    }
+    }}
 
-    .botoes {
+    .botoes {{
       display: flex;
       justify-content: center;
       gap: 1rem;
-    }
+    }}
 
-    .ligar {
+    .ligar {{
       background-color: #b5a556;
       color: black;
       border: none;
@@ -119,9 +122,9 @@ html = """<!DOCTYPE html>
       font-weight: bold;
       cursor: pointer;
       border-radius: 5px;
-    }
+    }}
 
-    .desligar {
+    .desligar {{
       background-color: black;
       color: white;
       border: none;
@@ -129,36 +132,36 @@ html = """<!DOCTYPE html>
       font-weight: bold;
       cursor: pointer;
       border-radius: 5px;
-    }
+    }}
 
-    .info {
+    .info {{
       display: flex;
       justify-content: space-around;
       padding: 2rem;
-    }
+    }}
 
-    .info div {
+    .info div {{
       width: 30%;
-    }
+    }}
 
-    .info h3 {
+    .info h3 {{
       font-family: monospace;
       font-size: 1.6rem;
       margin-bottom: 1rem;
-    }
+    }}
 
-    .info p {
+    .info p {{
       font-size: 0.95rem;
       line-height: 1.5;
       color: #333;
-    }
+    }}
 
-    footer {
+    footer {{
       background-color: #ccc;
       text-align: center;
       padding: 0.5rem;
       font-size: 0.8rem;
-    }
+    }}
   </style>
 </head>
 <body>
@@ -180,10 +183,12 @@ html = """<!DOCTYPE html>
       </section>
 
       <section class="estado-led">
-        <h3 id="estado-led-texto">LED Desligado</h3>
+        <h3 id="estado-led-texto">LED {estado_texto}</h3>
         <div class="botoes">
-          <button class="ligar" onclick="fetch('/ligar').then(()=>atualizarEstado('Ligado'))">Ligar</button>
-          <button class="desligar" onclick="fetch('/desligar').then(()=>atualizarEstado('Desligado'))">Desligar</button>
+          <form method="get" action="/">
+            <button class="ligar" name="led" value="on" type="submit">Ligar</button>
+            <button class="desligar" name="led" value="off" type="submit">Desligar</button>
+          </form>
         </div>
       </section>
 
@@ -207,12 +212,6 @@ html = """<!DOCTYPE html>
   <footer>
     <p>Copyright 2025</p>
   </footer>
-
-  <script>
-    function atualizarEstado(estado) {
-      document.getElementById("estado-led-texto").textContent = "LED " + estado;
-    }
-  </script>
 </body>
 </html>
 """
@@ -230,15 +229,14 @@ while True:
     print('Cliente conectado de', addr)
     request = conn.recv(1024).decode()
     print('Requisição:', request)
-
-    if 'GET /ligar' in request:
-        led.value(1)
-        response = 'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nLED Ligado'
-    elif 'GET /desligar' in request:
-        led.value(0)
-        response = 'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nLED Desligado'
-    else:
-        response = 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n' + html
-
+    
+    # Controlo do LED via parâmetros GET
+    if 'led=on' in request:
+        led.on()
+    elif 'led=off' in request:
+        led.off()
+    
+    # Gera HTML dinâmico com estado atual do LED
+    response = 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n' + gerar_html(led.value())
     conn.send(response)
     conn.close()
